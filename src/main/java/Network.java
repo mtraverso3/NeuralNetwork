@@ -1,19 +1,29 @@
 import org.ejml.simple.SimpleMatrix;
 
+import java.util.ArrayList;
+
 public class Network
 {
-    private final Layer[] layers;
+    private final ArrayList<Layer> layers;
 
     /**
      * First element in array is amount of inputs to network
      * Last element in array is amount of outputs from network
      */
-    public Network(int[] nodesPerLayer)
+    public Network(int inputs, ArrayList<Integer> hidden, int outputs)
     {
-        this.layers = new Layer[nodesPerLayer.length - 1];
+        this.layers = new ArrayList<>(hidden.size() + 1);
 
-        for (int i = 0; i < nodesPerLayer.length - 1; i++) {
-            this.layers[i] = new Layer(nodesPerLayer[i], nodesPerLayer[i + 1]);    //i-> inputs, i+1 neurons for following layer
+        if (hidden.size() == 0) {
+            this.layers.add(new Layer(inputs, outputs));
+        }
+        else {
+            this.layers.add(new Layer(inputs, hidden.get(0)));
+
+            for (int i = 0; i < hidden.size() - 1; i++) {
+                this.layers.add(new Layer(hidden.get(i), hidden.get(i + 1)));
+            }
+            this.layers.add(new Layer(hidden.get(hidden.size() - 1), outputs));
         }
     }
 
@@ -21,7 +31,7 @@ public class Network
     {
         SimpleMatrix nextInput = InitialInput;
         for (Layer currLayer : layers) {
-                nextInput = currLayer.getOutputs(nextInput);
+            nextInput = currLayer.getOutputs(nextInput);
         }
         return nextInput;
     }
