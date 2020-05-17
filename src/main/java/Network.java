@@ -1,6 +1,7 @@
 import org.ejml.simple.SimpleMatrix;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class Network
 {
@@ -10,28 +11,25 @@ public class Network
      * First element in array is amount of inputs to network
      * Last element in array is amount of outputs from network
      */
-    public Network(int inputs, ArrayList<Integer> hidden, int outputs)
+    public Network(int inputs, List<Integer> hidden, int outputs)
     {
-        this.layers = new ArrayList<>(hidden.size() + 1);
+        List<Integer> sizes = new ArrayList<>(hidden);
+        sizes.add(outputs);
 
-        if (hidden.size() == 0) {
-            this.layers.add(new Layer(inputs, outputs));
-        }
-        else {
-            this.layers.add(new Layer(inputs, hidden.get(0)));
+        layers = new ArrayList<>(sizes.size());
 
-            for (int i = 0; i < hidden.size() - 1; i++) {
-                this.layers.add(new Layer(hidden.get(i), hidden.get(i + 1)));
-            }
-            this.layers.add(new Layer(hidden.get(hidden.size() - 1), outputs));
+        int previous = inputs;
+        for (int size : sizes) {
+            layers.add(new Layer(previous, size));
+            previous = size;
         }
     }
 
     public SimpleMatrix feed(SimpleMatrix InitialInput)
     {
         SimpleMatrix nextInput = InitialInput;
-        for (Layer currLayer : layers) {
-            nextInput = currLayer.getOutputs(nextInput);
+        for (Layer layer : layers) {
+            nextInput = layer.getOutputs(nextInput);
         }
         return nextInput;
     }
