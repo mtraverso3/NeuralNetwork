@@ -6,25 +6,26 @@ public class Main
 {
     public static void main(String[] args)
     {
-        Network network = new Network(2, List.of(1), 1);
+        List<TrainingSample> andGateSamples = List.of(
+                new TrainingSample(new double[] {0, 0}, new double[] {0}),
+                new TrainingSample(new double[] {0, 1}, new double[] {0}),
+                new TrainingSample(new double[] {1, 0}, new double[] {0}),
+                new TrainingSample(new double[] {1, 1}, new double[] {1}));
 
-        for (int i = 0; i < 1; i++) {
-            List<Layer> layers = network.computeGradients(List.of(
-                    new TrainingSample(new double[] {0, 0}, new double[] {0}),
-                    new TrainingSample(new double[] {0, 1}, new double[] {0}),
-                    new TrainingSample(new double[] {1, 0}, new double[] {0}),
-                    new TrainingSample(new double[] {1, 1}, new double[] {1})));
+        Network network = new Network(2, List.of(), 1);
+
+        for (int i = 0; i < 1000; i++) {
+            List<Layer> layers = network.computeGradients(andGateSamples);
 
             Network.scaleLayerList(layers, 0.01);
             network.addDelta(layers);
         }
 
         network.dump();
-
-        System.out.println(asList(network.evaluate(new double[] {0, 0})));
-        System.out.println(asList(network.evaluate(new double[] {0, 1})));
-        System.out.println(asList(network.evaluate(new double[] {1, 0})));
-        System.out.println(asList(network.evaluate(new double[] {1, 1})));
+        for (TrainingSample sample :
+                andGateSamples) {
+            System.out.println(asList(NNMath.roundAll(network.evaluate(sample.inputs()))));
+        }
     }
 
     private static List<Double> asList(double[] activation)
