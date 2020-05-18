@@ -6,7 +6,7 @@ import java.util.function.Function;
 
 public class Network
 {
-    private final List<Layer> layers;
+    private List<Layer> layers;
 
     /**
      * First element in array is amount of inputs to network
@@ -36,31 +36,46 @@ public class Network
         return toVector(nextInput);
     }
 
-    private static SimpleMatrix toMatrix(double[] values)
+    public void addDelta(List<Layer> deltas)
     {
-        return new SimpleMatrix(values.length, 1, true, values);
-    }
+        List<Layer> newLayers = new ArrayList<>();
 
-    /**
-     * Extract vector of doubles from single-column matrix
-     */
-    private static double[] toVector(SimpleMatrix matrix)
-    {
-        double[] output = new double[matrix.getNumElements()];
-        for (int i = 0; i < output.length; i++) {
-            output[i] = matrix.get(i, 0);
+        for (int i = 0; i < layers.size(); i++) {
+            SimpleMatrix deltaWeight = deltas.get(i).getWeights();
+            SimpleMatrix currentWeight = layers.get(i).getWeights();
+
+            SimpleMatrix deltaBias = deltas.get(i).getBiases();
+            SimpleMatrix currentBiases = layers.get(i).getBiases();
+
+            currentWeight.plus(deltaWeight);
+
+            newLayers.add(new Layer(layers.get(i).getNeurons(), currentWeight.plus(deltaWeight), currentBiases.plus(deltaBias)));
         }
-        return output;
+
+        this.layers = newLayers;
     }
 
-    public List<Layer> computeGradients(double[] input, double[] expectedOutputs)
+    public List<Layer> computeGradients(List<TrainingSample> samples)
     {
-        List<double[]> activations = computeActivations(input);
+        if (samples.isEmpty()) {
+            throw new IllegalArgumentException("Training samples is empty");
+        }
+
+        List<Layer> sum = samples.stream()
+                .map(this::computeGradients)
+                .reduce(null, (cumulative, gradients) -> cumulative == null ? gradients : addLayerLists(cumulative, gradients));
+
+        return scaleLayerList(sum, 1d / samples.size());
+    }
+
+    public List<Layer> computeGradients(TrainingSample sample)
+    {
+        List<double[]> activations = computeActivations(sample.inputs());
 
         int current = activations.size() - 1;
 
         SimpleMatrix activation = toMatrix(activations.get(current));
-        SimpleMatrix expected = toMatrix(expectedOutputs);
+        SimpleMatrix expected = toMatrix(sample.expectedOutputs());
         SimpleMatrix delta = activation
                 .minus(expected)
                 .scale(2);
@@ -82,11 +97,53 @@ public class Network
             activation = toMatrix(previousLayerActivations);
             current--;
         }
+        return result;
+    }
+
+    private List<double[]> computeActivations(double[] input)
+    {
+        List<double[]> result = new ArrayList<>(layers.size());
+
+        SimpleMatrix activations = toMatrix(input);
+        result.add(toVector(activations));
+        for (Layer layer : layers) {
+            activations = layer.getOutputs(activations);
+            result.add(toVector(activations));
+        }
 
         return result;
     }
 
-    private SimpleMatrix apply(SimpleMatrix matrix, Function<Double, Double> function)
+    public static List<Layer> scaleLayerList(List<Layer> layers, double scale)
+    {
+        List<Layer> result = new ArrayList<>(layers.size());
+
+        for (Layer layer : layers) {
+            SimpleMatrix weights = layer.getWeights().scale(scale);
+            SimpleMatrix biases = layer.getBiases().scale(scale);
+            result.add(new Layer(layer.getNeurons(), weights, biases));
+        }
+        return result;
+    }
+
+    private static List<Layer> addLayerLists(List<Layer> layer1, List<Layer> layer2)
+    {
+        if (layer1.size() != layer2.size()) {
+            throw new IllegalArgumentException("Layer list must have the same size");
+        }
+
+        List<Layer> result = new ArrayList<>(layer1.size());
+
+        for (int i = 0; i < layer1.size(); i++) {
+            SimpleMatrix weights = layer1.get(i).getWeights().plus(layer2.get(i).getWeights());
+            SimpleMatrix biases = layer1.get(i).getBiases().plus(layer2.get(i).getBiases());
+            result.add(new Layer(layer1.get(i).getNeurons(), weights, biases));
+        }
+
+        return result;
+    }
+
+    private static SimpleMatrix apply(SimpleMatrix matrix, Function<Double, Double> function)
     {
         SimpleMatrix result = new SimpleMatrix(matrix.numRows(), matrix.numCols());
 
@@ -99,17 +156,37 @@ public class Network
         return result;
     }
 
-    public List<double[]> computeActivations(double[] input)
+    private static SimpleMatrix toMatrix(double[] values)
     {
-        List<double[]> result = new ArrayList<>(layers.size());
+        return new SimpleMatrix(values.length, 1, true, values);
+    }
 
-        SimpleMatrix activations = toMatrix(input);
-        result.add(toVector(activations));
-        for (Layer layer : layers) {
-            activations = layer.getOutputs(activations);
-            result.add(toVector(activations));
+    /**
+     * Extract vector of doubles from single-column matrix
+     */
+    private static double[] toVector(SimpleMatrix matrix)
+    {
+        double[] output = new double[matrix.getNumElements()];
+        for (int i = 0; i < output.length; i++) {
+            output[i] = matrix.get(i, 0);
         }
+        return output;
+    }
 
-        return result;
+    public static void printLayers(List<Layer> layers)
+    {
+        for (int i = 0; i < layers.size(); i++) {
+            System.out.println("=== Layer " + i);
+
+            System.out.println("= Weights");
+            System.out.println(layers.get(i).getWeights());
+            System.out.println("= Biases");
+            System.out.println(layers.get(i).getBiases());
+        }
+    }
+
+    public void dump()
+    {
+        printLayers(layers);
     }
 }
