@@ -27,19 +27,6 @@ public class Main
         System.out.println(asList(network.evaluate(new double[] {1, 1})));
     }
 
-//    private static void dumpGradients(Network network, double[] input, double[] output)
-//    {
-//        List<Layer> layers = network.computeGradients(input, output);
-//        for (int i = 0; i < layers.size(); i++) {
-//            System.out.println("=== Layer " + i);
-//
-//            System.out.println("= Weights");
-//            System.out.println(layers.get(i).getWeights());
-//            System.out.println("= Biases");
-//            System.out.println(layers.get(i).getBiases());
-//        }
-//    }
-
     private static List<Double> asList(double[] activation)
     {
         return Arrays.stream(activation).boxed().collect(Collectors.toList());

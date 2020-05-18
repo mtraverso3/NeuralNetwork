@@ -1,7 +1,5 @@
 import org.ejml.simple.SimpleMatrix;
 
-import java.util.concurrent.ThreadLocalRandom;
-
 public class Layer
 {
     private final SimpleMatrix weights;
@@ -46,16 +44,5 @@ public class Layer
             matrix.set(i, 0, sigmoidVal);
         }
         return matrix;
-    }
-
-    private static double[][] getRandomArray(int rows, int cols)
-    {
-        double[][] arr = new double[rows][cols];
-        for (int i = 0; i < rows; i++) {
-            for (int j = 0; j < cols; j++) {
-                arr[i][j] = ThreadLocalRandom.current().nextDouble()*2d - 1d;
-            }
-        }
-        return arr;
     }
 }
