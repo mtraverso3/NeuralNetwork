@@ -19,6 +19,11 @@ public final class NNMath
         return x * (1 - x);
     }
 
+    public static double inverseSigmoid(double x)
+    {
+        return -Math.log(1 / x) - 1;
+    }
+
     public static double tanh(double x)
     {
         return Math.tanh(x);
