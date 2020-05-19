@@ -180,18 +180,18 @@ public class Network
         printLayers(layers);
     }
 
-    public static void train(Network network, List<TrainingSample> andGateSamples)
+    public static void train(Network network, List<TrainingSample> andGateSamples, int epochs, double learningRate)
     {
-        for (int i = 0; i < 10000; i++) {
+        for (int i = 0; i < epochs; i++) {
             List<Layer> layers = network.computeGradients(andGateSamples);
 
-            Network.scaleLayerList(layers, 0.15);
+            scaleLayerList(layers, learningRate);
             network.applyDelta(layers);
         }
     }
 
-    public void train(List<TrainingSample> andGateSamples)
+    public void train(List<TrainingSample> andGateSamples, int epochs, double learningRate)
     {
-        train(this, andGateSamples);
+        train(this, andGateSamples, epochs, learningRate);
     }
 }
