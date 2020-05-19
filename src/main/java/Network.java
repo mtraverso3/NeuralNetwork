@@ -36,7 +36,7 @@ public class Network
         return toVector(nextInput);
     }
 
-    public void addDelta(List<Layer> deltas)
+    public void applyDelta(List<Layer> deltas)
     {
         List<Layer> newLayers = new ArrayList<>();
 
@@ -49,7 +49,7 @@ public class Network
 
             currentWeight.plus(deltaWeight);
 
-            newLayers.add(new Layer(layers.get(i).getNeurons(), currentWeight.plus(deltaWeight), currentBiases.plus(deltaBias)));
+            newLayers.add(new Layer(layers.get(i).getNeurons(), currentWeight.minus(deltaWeight), currentBiases.minus(deltaBias)));
         }
 
         this.layers = newLayers;
@@ -68,35 +68,35 @@ public class Network
         return scaleLayerList(sum, 1d / samples.size());
     }
 
-    public List<Layer> computeGradients(TrainingSample sample)
+    private List<Layer> computeGradients(TrainingSample sample)
     {
         List<double[]> activations = computeActivations(sample.inputs());
 
-        int current = activations.size() - 1;
+        int currentActivations = activations.size() - 1;
 
-        SimpleMatrix activation = toMatrix(activations.get(current));
         SimpleMatrix expected = toMatrix(sample.expectedOutputs());
-        SimpleMatrix delta = activation
+        SimpleMatrix delta = toMatrix(activations.get(currentActivations))
                 .minus(expected)
                 .scale(2);
 
         List<Layer> result = new ArrayList<>(layers.size());
 
-        while (current > 0) {
-            SimpleMatrix z = apply(activation, NNMath::inverseSigmoid);
-            SimpleMatrix sigmoidPrime = apply(z, NNMath::sigmoidDerivative);
+        for (int currentLayer = layers.size() - 1; currentLayer >= 0; currentLayer--) {
+            SimpleMatrix sigmoidPrime = apply(apply(toMatrix(activations.get(currentActivations)), NNMath::inverseSigmoid), NNMath::sigmoidDerivative);
+            delta = delta.elementMult(sigmoidPrime);
 
-            delta = delta.mult(sigmoidPrime.transpose()).transpose();
-
-            double[] previousLayerActivations = activations.get(current - 1);
             result.add(0, new Layer(
-                    layers.get(current - 1).getNeurons(),
-                    delta.mult(toMatrix(previousLayerActivations).transpose()),
+                    layers.get(currentLayer).getNeurons(),
+                    delta.mult(toMatrix(activations.get(currentActivations - 1)).transpose()),
                     delta));
 
-            activation = toMatrix(previousLayerActivations);
-            current--;
+            delta = layers.get(currentLayer).getWeights()
+                    .transpose()
+                    .mult(delta);
+
+            currentActivations--;
         }
+        
         return result;
     }
 

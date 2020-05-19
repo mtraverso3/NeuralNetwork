@@ -1,17 +1,19 @@
 import org.ejml.simple.SimpleMatrix;
 
+import static java.lang.String.format;
+
 public class Layer
 {
     private final SimpleMatrix weights;
     private final SimpleMatrix biases;
     private final int neurons;
 
-    public Layer(int inputs, int neurons)
+    public Layer(int inputs, int outputs)
     {
-        this.neurons = neurons;
+        this.neurons = outputs;
 
-        weights = new SimpleMatrix(neurons, inputs, true, new double[inputs * neurons]);
-        biases = new SimpleMatrix(neurons, 1, true, new double[neurons]);
+        weights = new SimpleMatrix(outputs, inputs, true, new double[inputs * outputs]);
+        biases = new SimpleMatrix(outputs, 1, true, new double[outputs]);
     }
 
     public Layer(int neurons, SimpleMatrix weights, SimpleMatrix biases)
@@ -44,5 +46,17 @@ public class Layer
             matrix.set(i, 0, sigmoidVal);
         }
         return matrix;
+    }
+
+    @Override
+    public String toString()
+    {
+        return format("[inputs=%s, outputs=%s]: w=%sx%x, b=%sx%x",
+                weights.numCols(),
+                biases.numRows(),
+                weights.numRows(),
+                weights.numCols(),
+                biases.numRows(),
+                biases.numCols());
     }
 }

@@ -13,12 +13,12 @@ public final class NNMath
 
     public static double sigmoidDerivative(double x)
     {
-        return x * (1 - x);
+        return sigmoid(x) * (1 - sigmoid(x));
     }
 
     public static double inverseSigmoid(double x)
     {
-        return -Math.log(1 / x) - 1;
+        return -Math.log(1 / x - 1);
     }
 
     public static double tanh(double x)
