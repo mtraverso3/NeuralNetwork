@@ -42,7 +42,7 @@ public class Layer
     {
         SimpleMatrix matrix = weights.mult(inputs).plus(biases);
         for (int i = 0; i < neurons; i++) {
-            double sigmoidVal = NNMath.sigmoid(matrix.get(i, 0));
+            double sigmoidVal = NNUtils.sigmoid(matrix.get(i, 0));
             matrix.set(i, 0, sigmoidVal);
         }
         return matrix;

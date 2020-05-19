@@ -33,7 +33,7 @@ public class Network
             nextInput = layer.getOutputs(nextInput);
         }
 
-        return toVector(nextInput);
+        return NNUtils.toVector(nextInput);
     }
 
     public void applyDelta(List<Layer> deltas)
@@ -82,7 +82,7 @@ public class Network
         List<Layer> result = new ArrayList<>(layers.size());
 
         for (int currentLayer = layers.size() - 1; currentLayer >= 0; currentLayer--) {
-            SimpleMatrix sigmoidPrime = apply(apply(toMatrix(activations.get(currentActivations)), NNMath::inverseSigmoid), NNMath::sigmoidDerivative);
+            SimpleMatrix sigmoidPrime = apply(apply(toMatrix(activations.get(currentActivations)), NNUtils::inverseSigmoid), NNUtils::sigmoidDerivative);
             delta = delta.elementMult(sigmoidPrime);
 
             result.add(0, new Layer(
@@ -96,7 +96,7 @@ public class Network
 
             currentActivations--;
         }
-        
+
         return result;
     }
 
@@ -105,10 +105,10 @@ public class Network
         List<double[]> result = new ArrayList<>(layers.size());
 
         SimpleMatrix activations = toMatrix(input);
-        result.add(toVector(activations));
+        result.add(NNUtils.toVector(activations));
         for (Layer layer : layers) {
             activations = layer.getOutputs(activations);
-            result.add(toVector(activations));
+            result.add(NNUtils.toVector(activations));
         }
 
         return result;
@@ -161,17 +161,7 @@ public class Network
         return new SimpleMatrix(values.length, 1, true, values);
     }
 
-    /**
-     * Extract vector of doubles from single-column matrix
-     */
-    private static double[] toVector(SimpleMatrix matrix)
-    {
-        double[] output = new double[matrix.getNumElements()];
-        for (int i = 0; i < output.length; i++) {
-            output[i] = matrix.get(i, 0);
-        }
-        return output;
-    }
+
 
     public static void printLayers(List<Layer> layers)
     {
@@ -188,5 +178,20 @@ public class Network
     public void dump()
     {
         printLayers(layers);
+    }
+
+    public static void train(Network network, List<TrainingSample> andGateSamples)
+    {
+        for (int i = 0; i < 10000; i++) {
+            List<Layer> layers = network.computeGradients(andGateSamples);
+
+            Network.scaleLayerList(layers, 0.15);
+            network.applyDelta(layers);
+        }
+    }
+
+    public void train(List<TrainingSample> andGateSamples)
+    {
+        train(this, andGateSamples);
     }
 }
