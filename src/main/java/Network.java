@@ -185,7 +185,7 @@ public class Network
         for (int i = 0; i < epochs; i++) {
             List<Layer> layers = network.computeGradients(andGateSamples);
 
-            scaleLayerList(layers, learningRate);
+            layers = scaleLayerList(layers, learningRate);
             network.applyDelta(layers);
         }
     }
