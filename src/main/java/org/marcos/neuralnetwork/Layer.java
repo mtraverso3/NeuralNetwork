@@ -1,3 +1,5 @@
+package org.marcos.neuralnetwork;
+
 import org.ejml.simple.SimpleMatrix;
 
 import static java.lang.String.format;

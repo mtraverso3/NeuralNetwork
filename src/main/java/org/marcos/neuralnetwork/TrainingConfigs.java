@@ -1,6 +1,6 @@
+package org.marcos.neuralnetwork;
+
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -22,11 +22,12 @@ public final class TrainingConfigs
 
         Network network = new Network(2, List.of(), 1);
 
-        network.train(samples, 1000, 0.1);
+        network.train(samples, 10000, 0.1);
 
         network.dump();
         for (TrainingSample sample : samples) {
-            System.out.println(NNUtils.asList(NNUtils.roundAll(network.evaluate(sample.inputs()))));
+//            System.out.println(NNUtils.asList(NNUtils.roundAll(network.evaluate(sample.inputs()))));
+            System.out.println(NNUtils.asList(network.evaluate(sample.inputs())));
         }
         return network;
     }
@@ -58,14 +59,14 @@ public final class TrainingConfigs
     public static Network createAndTrainXSquared()
     {
         List<TrainingSample> samples = new ArrayList<>();
-        for (int i = 0; i < 250; i++) {
+        for (int i = 0; i < 400; i++) {
             double value = ThreadLocalRandom.current().nextDouble();
             samples.add(new TrainingSample(new double[] {value}, new double[] {value * value}));
         }
 
-        Network network = new Network(1, List.of(3), 1);
+        Network network = new Network(1, List.of(10,8), 1);
 
-        network.train(samples, 1000, 0.01);
+        network.train(samples, 10000, 0.5);
 
         network.dump();
         System.out.println(NNUtils.asList(network.evaluate(new double[] {0.3})));

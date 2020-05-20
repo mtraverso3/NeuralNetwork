@@ -1,8 +1,13 @@
+package org.marcos.neuralnetwork;
+
 import org.ejml.simple.SimpleMatrix;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
+
+import static org.marcos.neuralnetwork.NNUtils.inverseSigmoid;
+import static org.marcos.neuralnetwork.NNUtils.sigmoidDerivative;
 
 public class Network
 {
@@ -70,24 +75,27 @@ public class Network
 
     private List<Layer> computeGradients(TrainingSample sample)
     {
-        List<double[]> activations = computeActivations(sample.inputs());
+        List<SimpleMatrix> activations = computeActivations(sample.inputs());
 
         int currentActivations = activations.size() - 1;
 
         SimpleMatrix expected = toMatrix(sample.expectedOutputs());
-        SimpleMatrix delta = toMatrix(activations.get(currentActivations))
+        SimpleMatrix delta = activations.get(currentActivations)
                 .minus(expected)
                 .scale(2);
 
         List<Layer> result = new ArrayList<>(layers.size());
 
         for (int currentLayer = layers.size() - 1; currentLayer >= 0; currentLayer--) {
-            SimpleMatrix sigmoidPrime = apply(apply(toMatrix(activations.get(currentActivations)), NNUtils::inverseSigmoid), NNUtils::sigmoidDerivative);
+            SimpleMatrix sigmoidPrime = apply(
+                    activations.get(currentActivations),
+                    value -> sigmoidDerivative(inverseSigmoid(value)));
+
             delta = delta.elementMult(sigmoidPrime);
 
             result.add(0, new Layer(
                     layers.get(currentLayer).getNeurons(),
-                    delta.mult(toMatrix(activations.get(currentActivations - 1)).transpose()),
+                    delta.mult(activations.get(currentActivations - 1).transpose()),
                     delta));
 
             delta = layers.get(currentLayer).getWeights()
@@ -100,15 +108,15 @@ public class Network
         return result;
     }
 
-    private List<double[]> computeActivations(double[] input)
+    private List<SimpleMatrix> computeActivations(double[] input)
     {
-        List<double[]> result = new ArrayList<>(layers.size());
+        List<SimpleMatrix> result = new ArrayList<>(layers.size());
 
         SimpleMatrix activations = toMatrix(input);
-        result.add(NNUtils.toVector(activations));
+        result.add(activations);
         for (Layer layer : layers) {
             activations = layer.getOutputs(activations);
-            result.add(NNUtils.toVector(activations));
+            result.add(activations);
         }
 
         return result;
@@ -160,8 +168,6 @@ public class Network
     {
         return new SimpleMatrix(values.length, 1, true, values);
     }
-
-
 
     public static void printLayers(List<Layer> layers)
     {

@@ -1,3 +1,5 @@
+package org.marcos.neuralnetwork;
+
 import org.ejml.simple.SimpleMatrix;
 
 import java.util.Arrays;
